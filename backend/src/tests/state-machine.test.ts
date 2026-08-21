@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { transition, isTerminal, InvalidTransitionError } from "../state-machine.js";
+import { transition, isTerminal, InvalidTransitionError } from "../settlement/state-machine.js";
 
 describe("state machine transitions", () => {
   it("authorized -> held on structural check passed", () => {
