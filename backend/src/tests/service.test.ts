@@ -1,12 +1,10 @@
-import { describe, it, expect, beforeEach } from "vitest";
 import {
   SettlementService,
   CallNotFoundError,
   type CallRecord,
   type CallRepository,
-} from "../service.js";
+} from "../settlement/service.js";
 import { InvalidTransitionError } from "../settlement/state-machine.js";
-
 // In-memory fake repo — no Postgres needed to test the orchestration logic.
 class FakeCallRepository implements CallRepository {
   calls = new Map<string, CallRecord>();
