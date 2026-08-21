@@ -5,7 +5,7 @@ import {
   type CallRecord,
   type CallRepository,
 } from "../service.js";
-import { InvalidTransitionError } from "../state-machine.js";
+import { InvalidTransitionError } from "../settlement/state-machine.js";
 
 // In-memory fake repo — no Postgres needed to test the orchestration logic.
 class FakeCallRepository implements CallRepository {
