@@ -110,8 +110,11 @@ export async function createSolanaExecutor(
       );
 
       const signedTransaction = await signTransactionMessageWithSigners(transactionMessage);
-      await sendAndConfirm(signedTransaction, { commitment: "confirmed" });
 
+await sendAndConfirm(
+  signedTransaction as Parameters<typeof sendAndConfirm>[0],
+  { commitment: "confirmed" },
+);
       return getSignatureFromTransaction(signedTransaction);
     },
   };
