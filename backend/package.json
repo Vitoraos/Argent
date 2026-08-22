@@ -14,6 +14,7 @@
     "@fastify/cors": "^11.0.0",
     "@fastify/sensible": "^6.0.0",
     "zod": "^4.0.0",
+    "ajv": "^8.17.0",
     "drizzle-orm": "^0.36.0",
     "drizzle-kit": "^0.28.0",
     "pg": "^8.13.0",
