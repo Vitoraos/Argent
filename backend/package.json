@@ -21,9 +21,9 @@
     "@supabase/supabase-js": "^2.45.0",
     "@solana/kit": "^2.0.0",
     "@solana-program/token": "^0.4.0",
-    "@modelcontextprotocol/server": "beta",
-    "@modelcontextprotocol/fastify": "beta",
-    "@modelcontextprotocol/node": "beta",
+    "@modelcontextprotocol/server": "^2.0.0",
+    "@modelcontextprotocol/fastify": "^2.0.0",
+    "@modelcontextprotocol/node": "^2.0.0",
     "pg-boss": "^10.0.0",
     "pino": "^9.0.0",
     "dotenv": "^16.4.0"
