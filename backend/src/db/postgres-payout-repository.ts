@@ -3,9 +3,9 @@
 // NOT UNIT TESTED here — needs a live DB.
 
 import { sql, eq } from "drizzle-orm";
-import type { Database } from "../db/client.js";
-import { providerPayouts } from "../db/schema.js";
-import type { PayoutRepository, PendingPayout } from "./payout-service.js";
+import type { Database } from "./client.js";
+import { providerPayouts } from "./schema.js";
+import type { PayoutRepository, PendingPayout } from "../solana/payout-service.js";
 
 export class PostgresPayoutRepository implements PayoutRepository {
   constructor(private readonly db: Database) {}
