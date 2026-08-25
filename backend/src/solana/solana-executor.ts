@@ -8,13 +8,11 @@
 //
 // HONESTY FLAG: the @solana/kit transaction-building pattern below (pipe,
 // createTransactionMessage, sign, send) is verified against current docs.
-// The exact @solana-program/token instruction helper names
+// The @solana-program/token instruction helper names
 // (getTransferCheckedInstruction, findAssociatedTokenPda,
-// getCreateAssociatedTokenAccountIdempotentInstruction) are written from
-// the package's documented conventions but were NOT executed in this
-// environment (no network access). If these names have shifted, the fix
-// is almost always a mechanical rename — check @solana-program/token's
-// own type exports first.
+// getCreateAssociatedTokenIdempotentInstruction) are verified against
+// 0.16.0's type exports — note the name is "Idempotent" not
+// "IdempotentAccount", it was renamed between 0.4 and 0.16.
 
 import {
   createSolanaRpc,
@@ -34,7 +32,7 @@ import {
 import {
   getTransferCheckedInstruction,
   findAssociatedTokenPda,
-  getCreateAssociatedTokenAccountIdempotentInstruction,
+  getCreateAssociatedTokenIdempotentInstruction,
   TOKEN_PROGRAM_ADDRESS,
 } from "@solana-program/token";
 import type { SolanaExecutor } from "./payout-service.js";
@@ -80,7 +78,7 @@ export async function createSolanaExecutor(
       // Idempotent: creates the recipient's associated token account only
       // if it doesn't already exist — most providers won't have one yet
       // on their first payout.
-      const createAtaIx = getCreateAssociatedTokenAccountIdempotentInstruction({
+      const createAtaIx = getCreateAssociatedTokenIdempotentInstruction({
         payer: poolSigner,
         mint: usdcMint,
         owner: destination,
@@ -111,10 +109,10 @@ export async function createSolanaExecutor(
 
       const signedTransaction = await signTransactionMessageWithSigners(transactionMessage);
 
-await sendAndConfirm(
-  signedTransaction as Parameters<typeof sendAndConfirm>[0],
-  { commitment: "confirmed" },
-);
+      await sendAndConfirm(
+        signedTransaction as Parameters<typeof sendAndConfirm>[0],
+        { commitment: "confirmed" },
+      );
       return getSignatureFromTransaction(signedTransaction);
     },
   };
