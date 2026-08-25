@@ -8,10 +8,11 @@ const SCHEMA = {
 };
 
 describe("jsonSchemaToStandardSchema", () => {
-  it("returns a well-formed Standard Schema V1 object", () => {
+  it("returns a well-formed Standard Schema V1 object with jsonSchema attached", () => {
     const adapted = jsonSchemaToStandardSchema(SCHEMA);
     expect(adapted["~standard"].version).toBe(1);
     expect(typeof adapted["~standard"].validate).toBe("function");
+    expect(adapted.jsonSchema).toBe(SCHEMA);
   });
 
   it("validate() returns { value } for valid input", () => {
@@ -25,7 +26,7 @@ describe("jsonSchemaToStandardSchema", () => {
     const result = adapted["~standard"].validate({ notAddress: 1 });
     expect("issues" in result).toBe(true);
     if ("issues" in result) {
-      expect(result.issues.length).toBeGreaterThan(0);
+      expect(result.issues!.length).toBeGreaterThan(0);
     }
   });
 
