@@ -52,8 +52,11 @@ class FakeCallCreator implements CallCreator {
   }
 }
 
+// Match the real fetch signature: (input: URL | RequestInfo, init?: RequestInit) => Promise<Response>
+type FetchInput = URL | RequestInfo;
+
 function fakeFetch(response: { status: number; body: string; delayMs?: number; networkError?: boolean }) {
-  return vi.fn(async (_url: string, init?: RequestInit) => {
+  return vi.fn(async (_url: FetchInput, init?: RequestInit) => {
     if (response.networkError) throw new Error("network error");
     if (response.delayMs) {
       await new Promise((resolve, reject) => {
@@ -125,7 +128,7 @@ describe("proxyCall", () => {
     const settlement = new SettlementService(repo);
     const callCreator = new FakeCallCreator(repo);
     // fetch hangs forever until the AbortController fires
-    const fetchFn = vi.fn(async (_url: string, init?: RequestInit) => {
+    const fetchFn = vi.fn(async (_url: FetchInput, init?: RequestInit) => {
       return new Promise((_resolve, reject) => {
         init?.signal?.addEventListener("abort", () =>
           reject(new DOMException("aborted", "AbortError")),
