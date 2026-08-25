@@ -3,9 +3,9 @@
 // NOT UNIT TESTED here — needs a live DB.
 
 import { eq } from "drizzle-orm";
-import type { Database } from "../db/client.js";
-import { deposits, developers } from "../db/schema.js";
-import type { DepositRepository } from "./deposit-service.js";
+import type { Database } from "./client.js";
+import { deposits, developers } from "./schema.js";
+import type { DepositRepository } from "../solana/deposit-service.js";
 
 export class PostgresDepositRepository implements DepositRepository {
   constructor(private readonly db: Database) {}
