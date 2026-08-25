@@ -1,16 +1,26 @@
-// MCP v2's registerTool requires a "Standard Schema" compliant object
-// (the interface Zod v4/Valibot/ArkType all implement) rather than raw
-// JSON Schema. Our providers submit raw JSON Schema at onboarding, so
-// rather than pull in a lossy JSON-Schema-to-Zod converter, this wraps
-// the same Ajv validator already used in structural-check.ts to satisfy
-// that interface directly. Pure, no MCP SDK import here — fully testable.
+// MCP v2's registerTool requires a "Standard Schema with JSON" compliant
+// object (StandardSchemaWithJSON) — Standard Schema V1 plus a `jsonSchema`
+// property so the SDK can also advertise the schema to LLM clients that
+// prefer JSON Schema. We wrap the same Ajv validator already used in
+// structural-check.ts to satisfy that interface directly. Pure, no MCP SDK
+// import here — fully testable.
 
-import Ajv, { type ValidateFunction } from "ajv";
+import * as ajvNS from "ajv";
+import type { ValidateFunction } from "ajv";
+
+// With `module: NodeNext` + `"type": "module"`, the default import of a CJS
+// package like ajv resolves to the namespace object, not the default export.
+// Access `.default` explicitly to get the Ajv constructor.
+const Ajv = (ajvNS as unknown as {
+  default: new (opts?: { allErrors?: boolean; strict?: boolean }) => InstanceType<
+    typeof ajvNS.Ajv
+  >;
+}).default;
 
 const ajv = new Ajv({ allErrors: true, strict: false });
 
-// Minimal Standard Schema V1 shape (https://standardschema.dev) — only
-// the fields MCP's SDK actually reads.
+// Standard Schema V1 shape (https://standardschema.dev) — the fields
+// MCP's SDK actually reads from `~standard`.
 export interface StandardSchemaV1<Output = unknown> {
   "~standard": {
     version: 1;
@@ -21,9 +31,17 @@ export interface StandardSchemaV1<Output = unknown> {
   };
 }
 
+// MCP 2.0.0's registerTool config.inputSchema expects StandardSchema V1
+// *plus* a `jsonSchema` field carrying the original JSON Schema object —
+// the SDK uses it to advertise the schema shape to LLM clients that prefer
+// JSON Schema over the standard-schema validate() interface.
+export interface StandardSchemaWithJSON<Output = unknown> extends StandardSchemaV1<Output> {
+  jsonSchema: Record<string, unknown>;
+}
+
 export function jsonSchemaToStandardSchema<Output = unknown>(
   schema: Record<string, unknown>,
-): StandardSchemaV1<Output> {
+): StandardSchemaWithJSON<Output> {
   const validateFn: ValidateFunction = ajv.compile(schema);
 
   return {
@@ -41,5 +59,6 @@ export function jsonSchemaToStandardSchema<Output = unknown>(
         };
       },
     },
+    jsonSchema: schema,
   };
 }
