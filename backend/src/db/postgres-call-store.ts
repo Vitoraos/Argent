@@ -11,8 +11,8 @@
 // what those already-correct decisions produce.
 
 import { eq } from "drizzle-orm";
-import type { Database } from "../db/client.js";
-import { calls, disputes } from "../db/schema.js";
+import type { Database } from "./client.js";
+import { calls, disputes } from "./schema.js";
 import type { CallRecord, CallRepository } from "../settlement/service.js";
 import type { CallCreator } from "../proxy/handler.js";
 
