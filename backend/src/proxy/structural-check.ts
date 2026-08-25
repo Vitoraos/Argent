@@ -3,7 +3,16 @@
 // (or a timeout that's already happened). The proxy handler is responsible
 // for the actual network call; this module only judges the outcome.
 
-import Ajv, { type ValidateFunction } from "ajv";
+import * as ajvNS from "ajv";
+import type { ValidateFunction } from "ajv";
+
+// Same NodeNext ESM/CJS interop workaround as json-schema-adapter.ts —
+// ajv's default import resolves to the namespace, not the default export.
+const Ajv = (ajvNS as unknown as {
+  default: new (opts?: { allErrors?: boolean; strict?: boolean }) => InstanceType<
+    typeof ajvNS.Ajv
+  >;
+}).default;
 
 const ajv = new Ajv({ allErrors: true, strict: false });
 
