@@ -1,64 +1,44 @@
-// MCP v2's registerTool requires a "Standard Schema with JSON" compliant
-// object (StandardSchemaWithJSON) — Standard Schema V1 plus a `jsonSchema`
-// property so the SDK can also advertise the schema to LLM clients that
-// prefer JSON Schema. We wrap the same Ajv validator already used in
-// structural-check.ts to satisfy that interface directly. Pure, no MCP SDK
-// import here — fully testable.
+// MCP v2's registerTool requires a StandardSchemaWithJSON — Standard Schema V1
+// PLUS a `jsonSchema` Converter field that lives INSIDE `~standard` (as a
+// sibling of `validate`). The SDK uses `~standard.jsonSchema` to advertise
+// the tool's argument shape to LLM clients in `tools/list`, and uses
+// `~standard.validate` to check incoming arguments on `tools/call`.
+//
+// The MCP TypeScript SDK ships a built-in helper, `fromJsonSchema`, that
+// builds exactly this shape and uses Ajv on Node automatically (and the
+// Cloudflare validator on edge). This thin wrapper exists only to keep
+// the call site (build-server.ts) decoupled from the SDK's symbol names
+// — pure delegation, no behavior of its own, fully testable via the
+// round-trip tests in json-schema-adapter.test.ts.
 
-import * as ajvNS from "ajv";
-import type { ValidateFunction } from "ajv";
+import { fromJsonSchema } from "@modelcontextprotocol/server";
 
-// With `module: NodeNext` + `"type": "module"`, the default import of a CJS
-// package like ajv resolves to the namespace object, not the default export.
-// Access `.default` explicitly to get the Ajv constructor.
-const Ajv = (ajvNS as unknown as {
-  default: new (opts?: { allErrors?: boolean; strict?: boolean }) => InstanceType<
-    typeof ajvNS.Ajv
-  >;
-}).default;
-
-const ajv = new Ajv({ allErrors: true, strict: false });
-
-// Standard Schema V1 shape (https://standardschema.dev) — the fields
-// MCP's SDK actually reads from `~standard`.
-export interface StandardSchemaV1<Output = unknown> {
-  "~standard": {
-    version: 1;
-    vendor: string;
-    validate: (
-      value: unknown,
-    ) => { value: Output; issues?: undefined } | { issues: { message: string }[] };
-  };
-}
-
-// MCP 2.0.0's registerTool config.inputSchema expects StandardSchema V1
-// *plus* a `jsonSchema` field carrying the original JSON Schema object —
-// the SDK uses it to advertise the schema shape to LLM clients that prefer
-// JSON Schema over the standard-schema validate() interface.
-export interface StandardSchemaWithJSON<Output = unknown> extends StandardSchemaV1<Output> {
-  jsonSchema: Record<string, unknown>;
-}
-
-export function jsonSchemaToStandardSchema<Output = unknown>(
+/**
+ * Wraps a JSON Schema object as a StandardSchemaWithJSON so it can be
+ * passed directly to McpServer.registerTool's `inputSchema` config.
+ *
+ * The returned object has the shape:
+ *   {
+ *     "~standard": {
+ *       version: 1,
+ *       vendor: "mcp",
+ *       validate: (value) => { value } | { issues: [{ message }] },
+ *       jsonSchema: {
+ *         input: (options) => schema,
+ *         output: (options) => schema,
+ *       },
+ *     }
+ *   }
+ *
+ * Uses the SDK's built-in Ajv-backed validator on Node (and Cloudflare's
+ * validator on edge). No custom Ajv instance is required — the default
+ * config is appropriate for the simple JSON-Schema inputs providers
+ * submit at onboarding. If a provider ever submits a schema needing
+ * custom formats or strict-mode tweaks, switch to passing a custom
+ * AjvJsonSchemaValidator instance as the second arg here.
+ */
+export function jsonSchemaToStandardSchema<T = unknown>(
   schema: Record<string, unknown>,
-): StandardSchemaWithJSON<Output> {
-  const validateFn: ValidateFunction = ajv.compile(schema);
-
-  return {
-    "~standard": {
-      version: 1,
-      vendor: "gateway-ajv-adapter",
-      validate: (value: unknown) => {
-        if (validateFn(value)) {
-          return { value: value as Output };
-        }
-        return {
-          issues: (validateFn.errors ?? []).map((e) => ({
-            message: `${e.instancePath || "(root)"} ${e.message ?? "invalid"}`.trim(),
-          })),
-        };
-      },
-    },
-    jsonSchema: schema,
-  };
+) {
+  return fromJsonSchema<T>(schema);
 }
